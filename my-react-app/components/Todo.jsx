@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import "../styles/Todo.css";
 import { useAuth } from "../context/useAuth";
+import Navbar from "./Navbar";
 
 export default function TodoApp() {
   const { user } = useAuth();
@@ -9,90 +10,109 @@ export default function TodoApp() {
   const [inputValue, setInputValue] = useState("");
   const [filter, setFilter] = useState("all");
 
-  // ✅ SINGLE loadTodos
+  // ================= FETCH TODOS =================
   const loadTodos = async () => {
     if (!user) return;
+
     try {
       const res = await fetch(`http://localhost:5000/todos/${user.id}`);
       const data = await res.json();
       setTodos(data);
-      
     } catch (err) {
-      console.error(err);
+      console.error("Fetch todos error:", err);
     }
   };
 
   useEffect(() => {
-    
+    const loadTodos = async () => {
+    if (!user) return;
+
+    try {
+      const res = await fetch(`http://localhost:5000/todos/${user.id}`);
+      const data = await res.json();
+      setTodos(data);
+    } catch (err) {
+      console.error("Fetch todos error:", err);
+    }
+  };
     loadTodos();
   }, [user]);
 
   // ================= ADD TODO =================
   const addTodo = async () => {
-    if (inputValue.trim() === "") return;
+    if (!inputValue.trim()) return;
 
-    await fetch("http://localhost:5000/todos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: inputValue,
-        userId: user.id,
-      }),
-    });
+    try {
+      await fetch("http://localhost:5000/todos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: inputValue,
+          userId: user.id,
+        }),
+      });
 
-    setInputValue("");
-    loadTodos(); // ✅ only DB source
+      setInputValue("");
+      loadTodos();
+    } catch (err) {
+      console.error("Add todo error:", err);
+    }
   };
 
-  // ================= DELETE =================
+  // ================= DELETE TODO =================
   const deleteTodo = async (id) => {
-    await fetch(`http://localhost:5000/todos/${id}`, {
-      method: "DELETE",
-    });
-    loadTodos();
+    try {
+      await fetch(`http://localhost:5000/todos/${id}`, {
+        method: "DELETE",
+      });
+      loadTodos();
+    } catch (err) {
+      console.error("Delete todo error:", err);
+    }
   };
 
-  // ================= TOGGLE =================
+  // ================= TOGGLE TODO =================
   const toggleTodo = async (id, completed) => {
-    await fetch(`http://localhost:5000/todos/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ completed: !completed }),
-    });
-    loadTodos();
+    try {
+      await fetch(`http://localhost:5000/todos/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: !completed }),
+      });
+      loadTodos();
+    } catch (err) {
+      console.error("Toggle todo error:", err);
+    }
   };
 
-  // ================= EDIT =================
+  // ================= EDIT TODO =================
   const editTodo = async (id, newText) => {
     if (!newText.trim()) return;
 
-    await fetch(`http://localhost:5000/todos/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: newText }),
-    });
-    loadTodos();
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") addTodo();
+    try {
+      await fetch(`http://localhost:5000/todos/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newText }),
+      });
+      loadTodos();
+    } catch (err) {
+      console.error("Edit todo error:", err);
+    }
   };
 
   // ================= FILTER =================
-  const getFilteredTodos = () => {
-    if (filter === "active") {
-      return todos.filter((t) => !t.completed);
-    }
-    if (filter === "completed") {
-      return todos.filter((t) => t.completed);
-    }
-    return todos;
-  };
+  const filteredTodos = todos.filter((todo) => {
+    if (filter === "active") return !todo.completed;
+    if (filter === "completed") return todo.completed;
+    return true;
+  });
 
-  const filteredTodos = getFilteredTodos();
-  const activeTodosCount = todos.filter((t) => !t.completed).length;
+  const activeCount = todos.filter((t) => !t.completed).length;
 
   return (
+    <>
+    <Navbar useAuth={useAuth}/>
     <div className="todo-app">
       <div className="todo-container">
         <div className="todo-header">
@@ -100,6 +120,7 @@ export default function TodoApp() {
           <p>Keep track of your daily tasks</p>
         </div>
 
+        {/* INPUT */}
         <div className="todo-input-section">
           <input
             type="text"
@@ -107,27 +128,29 @@ export default function TodoApp() {
             placeholder="What needs to be done?"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={(e) => e.key === "Enter" && addTodo()}
           />
           <button className="add-button" onClick={addTodo}>
             Add
           </button>
         </div>
 
+        {/* FILTER */}
         {todos.length > 0 && (
           <div className="filter-tabs">
             <button onClick={() => setFilter("all")}>
               All ({todos.length})
             </button>
             <button onClick={() => setFilter("active")}>
-              Active ({activeTodosCount})
+              Active ({activeCount})
             </button>
             <button onClick={() => setFilter("completed")}>
-              Completed ({todos.length - activeTodosCount})
+              Completed ({todos.length - activeCount})
             </button>
           </div>
         )}
 
+        {/* LIST */}
         <div className="todo-list">
           {filteredTodos.map((todo) => (
             <TodoItem
@@ -141,20 +164,24 @@ export default function TodoApp() {
         </div>
       </div>
     </div>
+    </>
   );
+  
 }
 
-// ================= ITEM =================
+// ================= SINGLE TODO ITEM =================
 function TodoItem({ todo, onToggle, onDelete, onEdit }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.title);
 
-  const handleEdit = () => {
+  const handleSave = () => {
     onEdit(todo._id, editText);
     setIsEditing(false);
   };
 
   return (
+    <>
+    
     <div className={`todo-item ${todo.completed ? "completed" : ""}`}>
       <input
         type="checkbox"
@@ -169,18 +196,32 @@ function TodoItem({ todo, onToggle, onDelete, onEdit }) {
           className="edit-input"
           value={editText}
           onChange={(e) => setEditText(e.target.value)}
-          onBlur={handleEdit}
+          onBlur={handleSave}
+          onKeyDown={(e) => e.key === "Enter" && handleSave()}
           autoFocus
         />
       ) : (
         <div className="todo-content">
-          <span className="todo-text">{todo.title}</span>
+          <span
+            className="todo-text"
+            onDoubleClick={() => setIsEditing(true)}
+            title="Double click to edit"
+          >
+            {todo.title}
+          </span>
         </div>
+      )}
+
+      {!todo.completed && !isEditing && (
+        <button className="edit-button" onClick={() => setIsEditing(true)}>
+          ✏️
+        </button>
       )}
 
       <button className="delete-button" onClick={() => onDelete(todo._id)}>
         ❌
       </button>
     </div>
+    </>
   );
 }

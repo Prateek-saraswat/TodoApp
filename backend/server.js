@@ -36,6 +36,7 @@ app.post("/signup", async (req, res) => {
       email,
       password: hashedPassword,
       role: role || "user",
+       status: "Inactive",
       createdAt: new Date(),
     });
 
@@ -167,7 +168,66 @@ app.patch("/todos/:id", async (req, res) => {
     res.status(500).json({ message: "Error updating todo" });
   }
 });
-/* ================= SERVER ================= */
+/* =================Admin Routes================= */
+app.post("/admin/users", async (req, res) => {
+  try {
+    const { fullName, email, password, role } = req.body;
+
+    if (!fullName || !email || !password) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
+
+    const usersCollection = getUsersCollection();
+
+    const existing = await usersCollection.findOne({ email });
+    if (existing) {
+      return res.status(409).json({ message: "User already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await usersCollection.insertOne({
+      fullName,
+      email,
+      password: hashedPassword,
+      role,
+      status: "Active",
+      createdAt: new Date(),
+    });
+
+    res.status(201).json({ message: "User added" });
+  } catch (err) {
+    res.status(500).json({ message: "Error adding user" });
+  }
+});
+
+app.get('/admin/users' , async (req , res) =>{
+    try{
+        const usersCollection = getUsersCollection()
+
+        const users = await usersCollection.find().toArray()
+        res.json(users)
+    }catch(err){
+       res.status(500).json({message : 'Error fetching users!'})
+    }
+})
+
+app.delete("/admin/users/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const usersCollection = getUsersCollection();
+
+    await usersCollection.deleteOne({ _id: new ObjectId(id) });
+
+    res.json({ message: "User deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting user" });
+  }
+});
+
+
+//
 
 app.listen(5000, () => {
   console.log("Server running on 5000");

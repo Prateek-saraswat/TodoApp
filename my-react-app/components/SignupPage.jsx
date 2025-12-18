@@ -9,7 +9,7 @@ export default function SignupPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    role : "user"
+    role : "user",
   });
   
   const [agreeToTerms, setAgreeToTerms] = useState(false);
@@ -59,7 +59,7 @@ export default function SignupPage() {
     if (validateForm()) {
       console.log('Signup attempt:', formData);
       // Add your signup logic here
-     fetch("http://localhost:3000/signup", {
+     fetch("http://localhost:5000/signup", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(formData),

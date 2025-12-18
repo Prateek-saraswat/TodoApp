@@ -1,61 +1,61 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import '../styles/Admin.css';
+import { useEffect } from 'react';
+import Navbar from './Navbar';
+import { useAuth } from '../context/useAuth';
 
 export default function AdminDashboard() {
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      fullName: 'John Doe',
-      email: 'john.doe@example.com',
-      role: 'Admin',
-      status: 'Active',
-      joinedDate: '2024-01-15',
-    },
-    {
-      id: 2,
-      fullName: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      role: 'User',
-      status: 'Active',
-      joinedDate: '2024-02-20',
-    },
-    {
-      id: 3,
-      fullName: 'Mike Johnson',
-      email: 'mike.johnson@example.com',
-      role: 'User',
-      status: 'Inactive',
-      joinedDate: '2024-03-10',
-    },
-    {
-      id: 4,
-      fullName: 'Sarah Williams',
-      email: 'sarah.williams@example.com',
-      role: 'Moderator',
-      status: 'Active',
-      joinedDate: '2024-04-05',
-    },
-    {
-      id: 5,
-      fullName: 'David Brown',
-      email: 'david.brown@example.com',
-      role: 'User',
-      status: 'Active',
-      joinedDate: '2024-05-12',
-    },
-  ]);
-
-  const [searchQuery, setSearchQuery] = useState('');
+   const [users, setUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUser, setNewUser] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    role: 'User',
+    fullName: "",
+    email: "",
+    password: "",
+    role: "User",
   });
   const [errors, setErrors] = useState({});
 
-  // Filter users based on search query
+  //  FETCH USERS 
+  const loadUsers = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/admin/users");
+      const data = await res.json();
+
+      
+      const formattedUsers = data.map((u) => ({
+        ...u,
+        id: u._id,
+      }));
+
+      setUsers(formattedUsers);
+    } catch (err) {
+      console.log("Error loading users", err);
+    }
+  };
+
+  useEffect(() => {
+    const loadUsers = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/admin/users");
+      const data = await res.json();
+
+    
+      const formattedUsers = data.map((u) => ({
+        ...u,
+        id: u._id,
+      }));
+      console.log(formattedUsers)
+
+      setUsers(formattedUsers);
+    } catch (err) {
+      console.log("Error loading users", err);
+    }
+  };
+    loadUsers();
+  }, []);
+
+  //  FILTER 
   const filteredUsers = users.filter(
     (user) =>
       user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -63,95 +63,93 @@ export default function AdminDashboard() {
       user.role.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Get statistics
+  // ================= STATS =================
   const totalUsers = users.length;
-  const activeUsers = users.filter((user) => user.status === 'Active').length;
-  const adminUsers = users.filter((user) => user.role === 'Admin').length;
-  const inactiveUsers = users.filter((user) => user.status === 'Inactive').length;
+  const activeUsers = users.filter((u) => u.status === "Active").length;
+  const adminUsers = users.filter((u) => u.role === "Admin").length;
+  const inactiveUsers = users.filter((u) => u.status === "Inactive").length;
 
-  // Handle input change for new user
+  // FORM 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewUser({
-      ...newUser,
-      [name]: value,
-    });
+    setNewUser({ ...newUser, [name]: value });
   };
 
-  // Validate form
   const validateForm = () => {
     const newErrors = {};
 
-    if (!newUser.fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
-    }
-
-    if (!newUser.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(newUser.email)) {
-      newErrors.email = 'Email is invalid';
-    } else if (users.some((user) => user.email === newUser.email)) {
-      newErrors.email = 'Email already exists';
-    }
-
-    if (!newUser.password) {
-      newErrors.password = 'Password is required';
-    } else if (newUser.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
+    if (!newUser.fullName.trim()) newErrors.fullName = "Full name is required";
+    if (!newUser.email.trim()) newErrors.email = "Email is required";
+    if (!newUser.password) newErrors.password = "Password is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Add new user
-  const handleAddUser = (e) => {
-    e.preventDefault();
+  const handleAddUser = async (e) => {
+  e.preventDefault();
+  if (!validateForm()) return;
 
-    if (validateForm()) {
-      const user = {
-        id: users.length + 1,
-        fullName: newUser.fullName,
-        email: newUser.email,
-        role: newUser.role,
-        status: 'Active',
-        joinedDate: new Date().toISOString().split('T')[0],
-      };
+  try {
+    const res = await fetch("http://localhost:5000/admin/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newUser),
+    });
 
-      setUsers([...users, user]);
-      setShowAddUserModal(false);
-      setNewUser({
-        fullName: '',
-        email: '',
-        password: '',
-        role: 'User',
+    if (!res.ok) {
+      alert("Failed to add user");
+      return;
+    }
+
+    // 🔄 reload users from DB
+    loadUsers();
+
+    // reset modal
+    setShowAddUserModal(false);
+    setNewUser({
+      fullName: "",
+      email: "",
+      password: "",
+      role: "User",
+    });
+    setErrors({});
+  } catch (err) {
+    console.log("Add user error", err);
+  }
+};
+
+
+  // ================= DELETE USER (DB) =================
+  const handleDeleteUser = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
+
+    try {
+      await fetch(`http://localhost:5000/admin/users/${id}`, {
+        method: "DELETE",
       });
-      setErrors({});
+      loadUsers();
+    } catch (err) {
+      console.log("Delete error", err);
     }
   };
 
-  // Delete user
-  const handleDeleteUser = (id) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      setUsers(users.filter((user) => user.id !== id));
-    }
-  };
-
-  // Toggle user status
+  // ================= TOGGLE STATUS (UI only) =================
   const toggleUserStatus = (id) => {
     setUsers(
-      users.map((user) =>
-        user.id === id
-          ? {
-              ...user,
-              status: user.status === 'Active' ? 'Inactive' : 'Active',
-            }
-          : user
+      users.map((u) =>
+        u.id === id
+          ? { ...u, status: u.status === "Active" ? "Inactive" : "Active" }
+          : u
       )
     );
   };
 
   return (
+    <>
+    <Navbar useAuth={useAuth}/>
     <div className="admin-dashboard">
       <div className="dashboard-container">
         {/* Header */}
@@ -304,7 +302,7 @@ export default function AdminDashboard() {
           <table className="users-table">
             <thead>
               <tr>
-                <th>ID</th>
+                
                 <th>Full Name</th>
                 <th>Email</th>
                 <th>Role</th>
@@ -336,7 +334,6 @@ export default function AdminDashboard() {
               ) : (
                 filteredUsers.map((user) => (
                   <tr key={user.id}>
-                    <td>{user.id}</td>
                     <td>
                       <div className="user-name">
                         <div className="user-avatar">
@@ -353,17 +350,17 @@ export default function AdminDashboard() {
                     </td>
                     <td>
                       <span
-                        className={`status-badge ${user.status.toLowerCase()}`}
+                        className={`status-badge ${user.status}`}
                       >
                         {user.status}
                       </span>
                     </td>
-                    <td>{user.joinedDate}</td>
+                    <td>{new Date(user.createdAt).toDateString()}</td>
                     <td>
                       <div className="action-buttons">
                         <button
                           className="action-btn toggle"
-                          onClick={() => toggleUserStatus(user.id)}
+                          onClick={() => toggleUserStatus(user.id?.toLowerCase())}
                           title={
                             user.status === 'Active'
                               ? 'Deactivate'
@@ -504,5 +501,6 @@ export default function AdminDashboard() {
         )}
       </div>
     </div>
+    </>
   );
 }
