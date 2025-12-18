@@ -1,6 +1,4 @@
-import React from 'react';
 import '../styles/Navbar.css';
-// import { useAuth } from '../context/useAuth';
 
 export default function Navbar({useAuth}) {
   const { user, logout } = useAuth();

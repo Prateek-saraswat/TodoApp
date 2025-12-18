@@ -1,57 +1,204 @@
-/* Navbar Styles */
+/* Navbar CSS - Matching Admin Dashboard Design */
 
 .navbar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 80px rgba(91, 173, 254, 0.15);
   position: sticky;
   top: 0;
   z-index: 1000;
-  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  animation: navSlideDown 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  backdrop-filter: blur(20px);
+}
+
+@keyframes navSlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animated Background Pattern */
+.navbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(91, 173, 254, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(131, 58, 180, 0.1) 0%, transparent 50%);
+  animation: backgroundPulse 15s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes backgroundPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* Bottom Glow Line */
+.navbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #5badfe,
+    #7e22ce,
+    #5badfe,
+    transparent
+  );
+  animation: lineGlow 3s ease-in-out infinite;
+}
+
+@keyframes lineGlow {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translateX(-50%);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .navbar-container {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 16px 30px;
+  padding: 20px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 /* Brand Section */
 .navbar-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   cursor: pointer;
-  transition: transform 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: brandFadeIn 0.8s ease-out 0.3s backwards;
+}
+
+@keyframes brandFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .navbar-brand:hover {
-  transform: scale(1.05);
+  transform: scale(1.05) translateY(-2px);
 }
 
 .brand-icon {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.2);
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #5badfe 0%, #7e22ce 100%);
   backdrop-filter: blur(10px);
-  border-radius: 10px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
   color: white;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 
+    0 8px 20px rgba(91, 173, 254, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    box-shadow: 
+      0 8px 20px rgba(91, 173, 254, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 8px 30px rgba(91, 173, 254, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* Icon Shine Effect */
+.brand-icon::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 70%
+  );
+  animation: iconShine 3s ease-in-out infinite;
+}
+
+@keyframes iconShine {
+  0% {
+    transform: rotate(0deg) translateX(-100%);
+  }
+  100% {
+    transform: rotate(360deg) translateX(100%);
+  }
 }
 
 .brand-text {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 800;
   color: white;
-  letter-spacing: -0.5px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  letter-spacing: -1px;
+  text-shadow: 
+    0 0 20px rgba(91, 173, 254, 0.5),
+    0 2px 10px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: textGlow 3s ease-in-out infinite;
+}
+
+@keyframes textGlow {
+  0%, 100% {
+    text-shadow: 
+      0 0 20px rgba(91, 173, 254, 0.5),
+      0 2px 10px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    text-shadow: 
+      0 0 30px rgba(91, 173, 254, 0.8),
+      0 2px 15px rgba(0, 0, 0, 0.4);
+  }
 }
 
 /* User Section */
@@ -59,123 +206,269 @@
   display: flex;
   align-items: center;
   gap: 20px;
+  animation: userFadeIn 0.8s ease-out 0.4s backwards;
+}
+
+@keyframes userFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
+  gap: 14px;
+  padding: 10px 22px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
   border-radius: 50px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Hover Glow Effect */
+.user-info::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(91, 173, 254, 0.2) 0%, transparent 70%);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.user-info:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .user-info:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(91, 173, 254, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 
+    0 8px 25px rgba(91, 173, 254, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .user-avatar {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+  background: linear-gradient(135deg, #5badfe 0%, #7e22ce 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 16px;
-  color: #667eea;
+  color: white;
   text-transform: uppercase;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 
+    0 4px 15px rgba(91, 173, 254, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
   border: 2px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+  flex-shrink: 0;
+  z-index: 1;
+  animation: avatarPulse 2s ease-in-out infinite;
+}
+
+@keyframes avatarPulse {
+  0%, 100% {
+    box-shadow: 
+      0 4px 15px rgba(91, 173, 254, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 4px 20px rgba(91, 173, 254, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
 }
 
 .user-details {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  position: relative;
+  z-index: 1;
 }
 
 .user-name {
   font-size: 15px;
-  font-weight: 600;
-  color: white;
+  font-weight: 700;
+  color: #1a202c;
   line-height: 1.2;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.3px;
 }
 
 .user-role {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 500;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 /* Logout Button */
 .logout-button {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
+  gap: 10px;
+  padding: 12px 26px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 10px;
-  color: white;
+  border-radius: 14px;
+  color: #1a202c;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Button Ripple Effect */
+.logout-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 71, 87, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.logout-button:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Button Shine Effect */
+.logout-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.5),
+    transparent
+  );
+  animation: buttonShine 3s ease-in-out infinite;
+}
+
+@keyframes buttonShine {
+  0% {
+    left: -100%;
+  }
+  50%, 100% {
+    left: 200%;
+  }
 }
 
 .logout-button:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, #ff4757 0%, #c44569 100%);
+  border-color: rgba(255, 71, 87, 0.3);
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 
+    0 8px 25px rgba(255, 71, 87, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .logout-button:active {
-  transform: translateY(0);
+  transform: translateY(-1px);
 }
 
 .logout-button svg {
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .logout-button:hover svg {
-  transform: translateX(3px);
+  transform: translateX(4px);
+  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.5));
+}
+
+/* Active Status Indicator */
+.user-info.active::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 10px;
+  height: 10px;
+  background: #2ed573;
+  border-radius: 50%;
+  border: 2px solid white;
+  animation: statusBlink 2s ease-in-out infinite;
+  z-index: 2;
+}
+
+@keyframes statusBlink {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 10px rgba(46, 213, 115, 0.8);
+  }
+  50% {
+    opacity: 0.5;
+    box-shadow: 0 0 5px rgba(46, 213, 115, 0.4);
+  }
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .navbar-container {
-    padding: 14px 20px;
+    padding: 18px 30px;
   }
 
   .brand-text {
-    font-size: 20px;
+    font-size: 24px;
   }
 
   .brand-icon {
-    width: 36px;
-    height: 36px;
-    font-size: 20px;
+    width: 44px;
+    height: 44px;
+    font-size: 24px;
   }
 
   .user-info {
-    padding: 6px 12px;
+    padding: 8px 18px;
   }
 
   .user-avatar {
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
   }
 
   .user-name {
@@ -187,15 +480,20 @@
   }
 
   .logout-button {
-    padding: 8px 16px;
+    padding: 10px 22px;
     font-size: 14px;
+  }
+
+  .navbar-user {
+    gap: 16px;
   }
 }
 
 @media (max-width: 600px) {
   .navbar-container {
     flex-direction: column;
-    gap: 15px;
+    gap: 18px;
+    padding: 16px 20px;
   }
 
   .navbar-user {
@@ -208,62 +506,85 @@
   }
 
   .user-info {
-    padding: 6px;
+    padding: 8px;
   }
 
   .logout-button {
     flex: 1;
     justify-content: center;
   }
+
+  .brand-text {
+    font-size: 22px;
+  }
+
+  .brand-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 22px;
+  }
 }
 
 @media (max-width: 480px) {
+  .navbar-container {
+    padding: 14px 15px;
+    gap: 15px;
+  }
+
   .brand-text {
-    font-size: 18px;
+    font-size: 20px;
   }
 
   .brand-icon {
-    width: 32px;
-    height: 32px;
-    font-size: 18px;
+    width: 38px;
+    height: 38px;
+    font-size: 20px;
   }
 
   .user-avatar {
-    width: 32px;
-    height: 32px;
-    font-size: 13px;
-  }
-
-  .logout-button span {
-    display: none;
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
   }
 
   .logout-button {
-    padding: 8px 12px;
+    padding: 10px 18px;
+    font-size: 13px;
+    gap: 8px;
+  }
+
+  .logout-button svg {
+    width: 16px;
+    height: 16px;
   }
 }
 
-/* Animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+/* Glassmorphism Enhancement */
+@supports (backdrop-filter: blur(20px)) {
+  .navbar {
+    backdrop-filter: blur(20px) saturate(180%);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.navbar {
-  animation: fadeIn 0.4s ease-out;
-}
-
-/* Glassmorphism effect enhancement */
-@supports (backdrop-filter: blur(10px)) {
+  
   .user-info,
-  .logout-button,
-  .brand-icon {
-    backdrop-filter: blur(10px);
+  .logout-button {
+    backdrop-filter: blur(20px);
+  }
+}
+
+/* Smooth Transitions */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Loading State */
+.navbar.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Print Styles */
+@media print {
+  .navbar {
+    display: none;
   }
 }
