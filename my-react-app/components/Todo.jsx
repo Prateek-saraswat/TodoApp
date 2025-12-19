@@ -1,19 +1,20 @@
 import { useState, useEffect } from "react";
-import "../styles/Todo.css";
 import { useAuth } from "../context/useAuth";
 import Navbar from "./Navbar";
+import "../styles/Todo.css"
 
 export default function TodoApp() {
   const { user } = useAuth();
+  console.log(user)
 
   const [todos, setTodos] = useState([]);
   const [inputValue, setInputValue] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [loading, setLoading] = useState(true);
 
-  // ================= LOAD TODOS =================
   const loadTodos = async () => {
     if (!user) return;
 
@@ -33,7 +34,6 @@ export default function TodoApp() {
     loadTodos();
   }, [user]);
 
-  // ================= ADD TODO =================
   const addTodo = async () => {
     if (!inputValue.trim()) return;
 
@@ -45,19 +45,19 @@ export default function TodoApp() {
           title: inputValue,
           userId: user.id,
           createdAt: new Date().toISOString(),
-          priority: "medium",
+          dueDate: dueDate || null,
           completed: false
         }),
       });
 
       setInputValue("");
+      setDueDate("");
       loadTodos();
     } catch (err) {
       console.error("Add todo error:", err);
     }
   };
 
-  // ================= DELETE TODO =================
   const deleteTodo = async (id) => {
     if (!window.confirm("Are you sure you want to delete this task?")) return;
     
@@ -71,7 +71,6 @@ export default function TodoApp() {
     }
   };
 
-  // ================= TOGGLE TODO COMPLETE =================
   const toggleTodo = async (id, currentStatus) => {
     try {
       await fetch(`http://localhost:5000/todos/${id}`, {
@@ -88,7 +87,6 @@ export default function TodoApp() {
     }
   };
 
-  // ================= MARK ALL COMPLETE =================
   const markAllComplete = async () => {
     if (!window.confirm("Mark all tasks as complete?")) return;
     
@@ -112,15 +110,17 @@ export default function TodoApp() {
     }
   };
 
-  // ================= EDIT TODO =================
-  const editTodo = async (id, newText) => {
+  const editTodo = async (id, newText, newDueDate) => {
     if (!newText.trim()) return;
 
     try {
       await fetch(`http://localhost:5000/todos/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newText }),
+        body: JSON.stringify({ 
+          title: newText,
+          dueDate: newDueDate || null
+        }),
       });
       loadTodos();
     } catch (err) {
@@ -128,56 +128,46 @@ export default function TodoApp() {
     }
   };
 
-  // ================= UPDATE PRIORITY =================
-  const updatePriority = async (id, priority) => {
-    try {
-      await fetch(`http://localhost:5000/todos/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priority: priority }),
-      });
-      loadTodos();
-    } catch (err) {
-      console.error("Update priority error:", err);
-    }
-  };
-
-  // ================= FILTER & SORT =================
   let filteredTodos = todos.filter((todo) => {
     if (filter === "active") return !todo.completed;
     if (filter === "completed") return todo.completed;
+    if (filter === "overdue") {
+      return !todo.completed && todo.dueDate && new Date(todo.dueDate) < new Date();
+    }
+    if (filter === "today") {
+      const today = new Date().toISOString().split('T')[0];
+      return todo.dueDate && todo.dueDate.split('T')[0] === today && !todo.completed;
+    }
     return true;
   });
 
-  // Search filter
   if (searchTerm) {
     filteredTodos = filteredTodos.filter(todo =>
       todo.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }
 
-  // Sort todos
   filteredTodos.sort((a, b) => {
     if (sortBy === "newest") {
       return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     } else if (sortBy === "oldest") {
       return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
-    } else if (sortBy === "priority") {
-      const priorityOrder = { high: 3, medium: 2, low: 1 };
-      return (priorityOrder[b.priority] || 2) - (priorityOrder[a.priority] || 2);
+    } else if (sortBy === "duedate") {
+      if (!a.dueDate && !b.dueDate) return 0;
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return new Date(a.dueDate) - new Date(b.dueDate);
     } else if (sortBy === "completed") {
       return (a.completed === b.completed) ? 0 : a.completed ? 1 : -1;
     }
     return 0;
   });
 
-  // ================= STATS =================
   const totalTasks = todos.length;
   const completedTasks = todos.filter((t) => t.completed).length;
   const inProgressTasks = totalTasks - completedTasks;
   const progressRate = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
   
-  // Today's stats
   const today = new Date().toISOString().split('T')[0];
   const todaysTasks = todos.filter(todo => 
     todo.createdAt && todo.createdAt.split('T')[0] === today
@@ -187,255 +177,322 @@ export default function TodoApp() {
     todo.completedAt && todo.completedAt.split('T')[0] === today
   ).length;
 
+  const overdueTasks = todos.filter(todo => 
+    !todo.completed && todo.dueDate && new Date(todo.dueDate) < new Date()
+  ).length;
+
+  const dueTodayTasks = todos.filter(todo => 
+    todo.dueDate && todo.dueDate.split('T')[0] === today && !todo.completed
+  ).length;
+
   return (
     <>
       <Navbar useAuth={useAuth} />
       
-      <div className="admin-todo-app">
-        {/* MAIN CONTAINER */}
-        <div className="admin-container">
-          
-          {/* HEADER SECTION */}
-          <div className="admin-header">
+      <div className="todo-app">
+        <div className="container">
+          {/* Header Section */}
+          <div className="app-header">
             <div className="header-content">
-              <h1 className="admin-title">Task Management Dashboard</h1>
-              <p className="admin-subtitle">Manage your daily tasks efficiently</p>
+              <div className="header-left">
+                <h1 className="app-title">Task Manager</h1>
+                <p className="app-subtitle">Organize your tasks efficiently</p>
+              </div>
+              <div className="header-right">
+                <div className="user-welcome">
+                  <div className="user-avatar">
+                    <span className="avatar-icon">👤</span>
+                  </div>
+                  <div className="user-info">
+                    <p className="user-name">Hello, {user?.fullName || 'User'}</p>
+                    <p className="user-stats">{totalTasks} tasks • {completedTasks} completed</p>
+                  </div>
+                </div>
+              </div>
             </div>
+
             <div className="header-actions">
-              <div className="search-box">
-                <input
-                  type="text"
-                  placeholder="Search tasks..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="search-input"
-                />
-                <span className="search-icon">🔍</span>
-              </div>
-              {inProgressTasks > 0 && (
-                <button 
-                  className="mark-all-btn"
-                  onClick={markAllComplete}
-                  title="Mark all tasks as complete"
-                >
-                  ✅ Mark All Complete
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* STATS CARDS GRID */}
-          <div className="stats-grid">
-            <div className="stat-card stat-primary">
-              <div className="stat-icon">📋</div>
-              <div className="stat-content">
-                <h3 className="stat-number">{totalTasks}</h3>
-                <p className="stat-label">Total Tasks</p>
-              </div>
-              <div className="stat-progress"></div>
-            </div>
-
-            <div className="stat-card stat-success">
-              <div className="stat-icon">✅</div>
-              <div className="stat-content">
-                <h3 className="stat-number">{completedTasks}</h3>
-                <p className="stat-label">Completed</p>
-              </div>
-              <div className="stat-progress"></div>
-            </div>
-
-            <div className="stat-card stat-warning">
-              <div className="stat-icon">⏳</div>
-              <div className="stat-content">
-                <h3 className="stat-number">{inProgressTasks}</h3>
-                <p className="stat-label">In Progress</p>
-              </div>
-              <div className="stat-progress"></div>
-            </div>
-
-            <div className="stat-card stat-info">
-              <div className="stat-icon">📈</div>
-              <div className="stat-content">
-                <h3 className="stat-number">{progressRate}%</h3>
-                <p className="stat-label">Progress Rate</p>
-              </div>
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill" 
-                  style={{ width: `${progressRate}%` }}
-                ></div>
+              <div className="search-container">
+                <div className="search-box">
+                  <span className="search-icon">🔍</span>
+                  <input
+                    type="text"
+                    placeholder="Search tasks..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="search-input"
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* MAIN CONTENT AREA */}
-          <div className="content-area">
-            
-            {/* LEFT SIDEBAR - INPUT & FILTERS */}
+          {/* Stats Cards */}
+          <div className="stats-container">
+            <div className="stat-card">
+              <div className="stat-content">
+                <div className="stat-icon total">📋</div>
+                <div className="stat-details">
+                  <h3 className="stat-number">{totalTasks}</h3>
+                  <p className="stat-label">Total Tasks</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-content">
+                <div className="stat-icon completed">✅</div>
+                <div className="stat-details">
+                  <h3 className="stat-number">{completedTasks}</h3>
+                  <p className="stat-label">Completed</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-content">
+                <div className="stat-icon pending">⏳</div>
+                <div className="stat-details">
+                  <h3 className="stat-number">{inProgressTasks}</h3>
+                  <p className="stat-label">In Progress</p>
+                </div>
+              </div>
+            </div>
+
+            {overdueTasks > 0 && (
+              <div className="stat-card overdue">
+                <div className="stat-content">
+                  <div className="stat-icon overdue-icon">⚠️</div>
+                  <div className="stat-details">
+                    <h3 className="stat-number">{overdueTasks}</h3>
+                    <p className="stat-label">Overdue</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {dueTodayTasks > 0 && (
+              <div className="stat-card today">
+                <div className="stat-content">
+                  <div className="stat-icon today-icon">🎯</div>
+                  <div className="stat-details">
+                    <h3 className="stat-number">{dueTodayTasks}</h3>
+                    <p className="stat-label">Due Today</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Progress Section */}
+          <div className="progress-section">
+            <div className="progress-header">
+              <h3 className="progress-title">Progress Overview</h3>
+              <div className="progress-percentage">{progressRate}%</div>
+            </div>
+            <div className="progress-bar-container">
+              <div 
+                className="progress-bar-fill"
+                style={{ width: `${progressRate}%` }}
+              ></div>
+            </div>
+            <div className="progress-stats">
+              <span className="progress-stat">{completedTasks} completed</span>
+              <span className="progress-stat">{inProgressTasks} remaining</span>
+            </div>
+          </div>
+
+          <div className="main-content">
+            {/* Left Sidebar - Add Task & Filters */}
             <div className="sidebar">
-              <div className="sidebar-card">
-                <h3 className="sidebar-title">Add New Task</h3>
-                <div className="task-input-group">
+              <div className="sidebar-card add-task-card">
+                <h3 className="card-title">Add New Task</h3>
+                <div className="add-task-form">
                   <input
                     type="text"
                     className="task-input"
-                    placeholder="Enter task description..."
+                    placeholder="What needs to be done?"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addTodo()}
                   />
-                  <button className="add-task-btn" onClick={addTodo}>
-                    <span>+ Add Task</span>
+                  <div className="due-date-section">
+                    <div className="due-date-label">
+                      <span className="date-icon">📅</span>
+                      <span>Set due date</span>
+                    </div>
+                    <input
+                      type="date"
+                      className="date-input"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                  <button 
+                    className="add-task-button"
+                    onClick={addTodo}
+                    disabled={!inputValue.trim()}
+                  >
+                    <span className="add-icon">+</span>
+                    <span>Add Task</span>
                   </button>
                 </div>
               </div>
 
-              <div className="sidebar-card">
-                <h3 className="sidebar-title">Quick Stats</h3>
-                <div className="quick-stats">
-                  <div className="quick-stat">
-                    <span className="quick-stat-icon">📅</span>
-                    <div>
-                      <p className="quick-stat-value">{todaysTasks}</p>
-                      <p className="quick-stat-label">Today's Tasks</p>
-                    </div>
-                  </div>
-                  <div className="quick-stat">
-                    <span className="quick-stat-icon">⚡</span>
-                    <div>
-                      <p className="quick-stat-value">{completedToday}</p>
-                      <p className="quick-stat-label">Completed Today</p>
-                    </div>
-                  </div>
+              <div className="sidebar-card filter-card">
+                <h3 className="card-title">Filter Tasks</h3>
+                <div className="filter-options">
+                  {[
+                    { id: 'all', label: 'All Tasks', count: totalTasks },
+                    { id: 'active', label: 'Active', count: inProgressTasks },
+                    { id: 'completed', label: 'Completed', count: completedTasks },
+                    { id: 'overdue', label: 'Overdue', count: overdueTasks },
+                    { id: 'today', label: 'Due Today', count: dueTodayTasks }
+                  ].map((option) => (
+                    <button
+                      key={option.id}
+                      className={`filter-option ${filter === option.id ? 'active' : ''}`}
+                      onClick={() => setFilter(option.id)}
+                    >
+                      <span className="filter-text">{option.label}</span>
+                      <span className="filter-count">{option.count}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div className="sidebar-card">
-                <h3 className="sidebar-title">Sort By</h3>
+              <div className="sidebar-card sort-card">
+                <h3 className="card-title">Sort Tasks</h3>
                 <div className="sort-options">
-                  <button 
-                    className={`sort-btn ${sortBy === 'newest' ? 'active' : ''}`}
-                    onClick={() => setSortBy('newest')}
-                  >
-                    Newest First
-                  </button>
-                  <button 
-                    className={`sort-btn ${sortBy === 'oldest' ? 'active' : ''}`}
-                    onClick={() => setSortBy('oldest')}
-                  >
-                    Oldest First
-                  </button>
-                  <button 
-                    className={`sort-btn ${sortBy === 'priority' ? 'active' : ''}`}
-                    onClick={() => setSortBy('priority')}
-                  >
-                    Priority
-                  </button>
-                  <button 
-                    className={`sort-btn ${sortBy === 'completed' ? 'active' : ''}`}
-                    onClick={() => setSortBy('completed')}
-                  >
-                    Completion Status
-                  </button>
+                  {[
+                    { id: 'newest', label: 'Newest First', icon: '🆕' },
+                    { id: 'oldest', label: 'Oldest First', icon: '📅' },
+                    { id: 'duedate', label: 'Due Date', icon: '⏰' },
+                    { id: 'completed', label: 'Completion', icon: '✅' }
+                  ].map((option) => (
+                    <button
+                      key={option.id}
+                      className={`sort-option ${sortBy === option.id ? 'active' : ''}`}
+                      onClick={() => setSortBy(option.id)}
+                    >
+                      <span className="sort-icon">{option.icon}</span>
+                      <span className="sort-text">{option.label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div className="sidebar-card">
-                <h3 className="sidebar-title">Quick Actions</h3>
-                <div className="quick-actions">
+              <div className="sidebar-card quick-actions">
+                <h3 className="card-title">Quick Actions</h3>
+                <div className="action-buttons">
+                  {inProgressTasks > 0 && (
+                    <button 
+                      className="action-button mark-all"
+                      onClick={markAllComplete}
+                    >
+                      <span className="action-icon">✅</span>
+                      <span>Mark All Complete</span>
+                    </button>
+                  )}
                   <button 
-                    className="quick-action-btn"
-                    onClick={() => setFilter('completed')}
+                    className="action-button refresh"
+                    onClick={loadTodos}
+                    disabled={loading}
                   >
-                    <span className="action-icon">✅</span>
-                    View Completed
+                    <span className="action-icon">🔄</span>
+                    <span>Refresh List</span>
                   </button>
                   <button 
-                    className="quick-action-btn"
-                    onClick={() => setFilter('active')}
-                  >
-                    <span className="action-icon">⏳</span>
-                    View Pending
-                  </button>
-                  <button 
-                    className="quick-action-btn"
+                    className="action-button clear"
                     onClick={() => {
                       setFilter('all');
                       setSearchTerm('');
                     }}
                   >
-                    <span className="action-icon">🔄</span>
-                    Clear Filters
+                    <span className="action-icon">🗑️</span>
+                    <span>Clear Filters</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* MAIN CONTENT - TASKS LIST */}
-            <div className="main-content">
-              <div className="content-header">
-                <div className="content-title">
-                  <h2>All Tasks</h2>
-                  <span className="badge">{filteredTodos.length} tasks</span>
-                  {loading && <span className="loading-badge">Loading...</span>}
+            {/* Main Content - Tasks List */}
+            <div className="tasks-container">
+              <div className="tasks-header">
+                <div className="tasks-header-left">
+                  <h2 className="tasks-title">My Tasks</h2>
+                  <div className="tasks-count">
+                    <span className="count-badge">{filteredTodos.length} tasks</span>
+                    {loading && <span className="loading-indicator">Loading...</span>}
+                  </div>
                 </div>
-                
-                <div className="filter-tabs">
-                  <button 
-                    className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
-                    onClick={() => setFilter('all')}
-                  >
-                    All ({totalTasks})
-                  </button>
-                  <button 
-                    className={`filter-tab ${filter === 'active' ? 'active' : ''}`}
-                    onClick={() => setFilter('active')}
-                  >
-                    Active ({inProgressTasks})
-                  </button>
-                  <button 
-                    className={`filter-tab ${filter === 'completed' ? 'active' : ''}`}
-                    onClick={() => setFilter('completed')}
-                  >
-                    Completed ({completedTasks})
-                  </button>
+                <div className="tasks-header-right">
+                  <div className="view-toggle">
+                    <span className="view-label">View:</span>
+                    <div className="view-options">
+                      {['all', 'active', 'completed'].map((option) => (
+                        <button
+                          key={option}
+                          className={`view-option ${filter === option ? 'active' : ''}`}
+                          onClick={() => setFilter(option)}
+                        >
+                          {option.charAt(0).toUpperCase() + option.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="tasks-container">
-                {loading ? (
-                  <div className="loading-state">
-                    <div className="loading-spinner"></div>
-                    <p>Loading tasks...</p>
+              {loading ? (
+                <div className="loading-state">
+                  <div className="loading-spinner"></div>
+                  <p className="loading-text">Loading your tasks...</p>
+                </div>
+              ) : filteredTodos.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-illustration">
+                    <span className="empty-icon">📝</span>
                   </div>
-                ) : filteredTodos.length === 0 ? (
-                  <div className="empty-state">
-                    <div className="empty-icon">📝</div>
-                    <h3>No tasks found</h3>
-                    <p>{searchTerm ? "Try a different search term" : "Add your first task using the input on the left"}</p>
-                    {searchTerm && (
-                      <button 
-                        className="clear-search-btn"
-                        onClick={() => setSearchTerm('')}
-                      >
-                        Clear Search
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  filteredTodos.map((todo, index) => (
-                    <AdminTodoItem
+                  <h3 className="empty-title">No tasks found</h3>
+                  <p className="empty-message">
+                    {searchTerm 
+                      ? `No tasks matching "${searchTerm}"`
+                      : filter === 'completed'
+                      ? "No completed tasks yet"
+                      : filter === 'active'
+                      ? "No pending tasks - Great job!"
+                      : filter === 'overdue'
+                      ? "No overdue tasks - You're on track!"
+                      : filter === 'today'
+                      ? "No tasks due today"
+                      : "Add your first task to get started"
+                    }
+                  </p>
+                  {searchTerm && (
+                    <button 
+                      className="clear-search-button"
+                      onClick={() => setSearchTerm('')}
+                    >
+                      Clear Search
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="tasks-list">
+                  {filteredTodos.map((todo, index) => (
+                    <TodoItem
                       key={todo._id}
                       todo={todo}
                       index={index}
                       onToggle={toggleTodo}
                       onDelete={deleteTodo}
                       onEdit={editTodo}
-                      onUpdatePriority={updatePriority}
                     />
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -444,185 +501,205 @@ export default function TodoApp() {
   );
 }
 
-// ================= ADMIN TODO ITEM COMPONENT =================
-function AdminTodoItem({ todo, index, onToggle, onDelete, onEdit, onUpdatePriority }) {
+function TodoItem({ todo, index, onToggle, onDelete, onEdit }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.title);
+  const [editDueDate, setEditDueDate] = useState(todo.dueDate ? todo.dueDate.split('T')[0] : '');
 
   const handleSave = () => {
-    onEdit(todo._id, editText);
-    setIsEditing(false);
+    if (editText.trim()) {
+      onEdit(todo._id, editText, editDueDate);
+      setIsEditing(false);
+    }
   };
 
-  const handleToggle = () => {
-    onToggle(todo._id, todo.completed);
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSave();
+    } else if (e.key === 'Escape') {
+      setIsEditing(false);
+      setEditText(todo.title);
+      setEditDueDate(todo.dueDate ? todo.dueDate.split('T')[0] : '');
+    }
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'No date';
     const date = new Date(dateString);
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
     });
   };
 
-  const formatTime = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const getDueDateStatus = (dueDate) => {
+    if (!dueDate) return { status: 'none', text: 'No due date', class: 'none' };
+    
+    const due = new Date(dueDate);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+    
+    const diffDays = Math.floor((dueDay - today) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return { status: 'overdue', text: 'Overdue', class: 'overdue' };
+    if (diffDays === 0) return { status: 'today', text: 'Today', class: 'today' };
+    if (diffDays === 1) return { status: 'tomorrow', text: 'Tomorrow', class: 'tomorrow' };
+    if (diffDays <= 7) return { status: 'week', text: 'This week', class: 'week' };
+    
+    return { 
+      status: 'future', 
+      text: due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      class: 'future'
+    };
   };
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'high': return '#ef4444';
-      case 'medium': return '#f59e0b';
-      case 'low': return '#10b981';
-      default: return '#6b7280';
-    }
-  };
-
-  const handlePriorityChange = (newPriority) => {
-    onUpdatePriority(todo._id, newPriority);
-  };
+  const dueDateStatus = getDueDateStatus(todo.dueDate);
+  const isOverdue = dueDateStatus.status === 'overdue';
 
   return (
     <div 
-      className={`admin-todo-item ${todo.completed ? 'completed' : ''}`}
+      className={`task-item ${todo.completed ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}`}
       style={{ animationDelay: `${index * 0.05}s` }}
     >
-      <div className="todo-item-left">
-        {/* COMPLETE CHECKBOX */}
-        <div className="todo-checkbox-wrapper">
-          <input
-            type="checkbox"
-            className="admin-todo-checkbox"
-            checked={todo.completed}
-            onChange={handleToggle}
-            id={`todo-${todo._id}`}
-          />
-          <label 
-            htmlFor={`todo-${todo._id}`} 
-            className="checkbox-label"
-            title={todo.completed ? "Mark as incomplete" : "Mark as complete"}
-          >
-            {todo.completed && <span className="checkmark">✓</span>}
-          </label>
-        </div>
+      <div className="task-checkbox-container">
+        <input
+          type="checkbox"
+          className="task-checkbox"
+          checked={todo.completed}
+          onChange={() => onToggle(todo._id, todo.completed)}
+          id={`task-${todo._id}`}
+        />
+        <label 
+          htmlFor={`task-${todo._id}`}
+          className="checkbox-label"
+        >
+          <span className="checkbox-custom"></span>
+        </label>
+      </div>
 
-        <div className="todo-content">
-          {isEditing ? (
+      <div className="task-content">
+        {isEditing ? (
+          <div className="edit-mode">
             <input
               type="text"
               className="edit-input"
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
-              onBlur={handleSave}
-              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+              onKeyDown={handleKeyDown}
               autoFocus
             />
-          ) : (
-            <>
-              <span 
-                className="todo-text"
-                onDoubleClick={() => setIsEditing(true)}
-                title="Double click to edit"
-              >
-                {todo.title}
-                {todo.completed && (
-                  <span className="completed-time">
-                    Completed at {formatTime(todo.completedAt)}
-                  </span>
-                )}
-              </span>
-              <div className="todo-meta">
-                <span className="todo-date">
-                  📅 Created: {formatDate(todo.createdAt)}
-                </span>
-                
-                {/* PRIORITY SELECTOR */}
-                <div className="priority-selector">
-                  <span className="priority-label">Priority:</span>
-                  <select 
-                    value={todo.priority || 'medium'}
-                    onChange={(e) => handlePriorityChange(e.target.value)}
-                    className="priority-dropdown"
-                    style={{ 
-                      backgroundColor: `${getPriorityColor(todo.priority)}20`,
-                      color: getPriorityColor(todo.priority),
-                      borderColor: getPriorityColor(todo.priority)
-                    }}
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
-                </div>
+            <div className="edit-date-row">
+              <input
+                type="date"
+                className="edit-date-input"
+                value={editDueDate}
+                onChange={(e) => setEditDueDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+              />
+              <div className="edit-actions">
+                <button className="save-button" onClick={handleSave}>Save</button>
+                <button className="cancel-button" onClick={() => {
+                  setIsEditing(false);
+                  setEditText(todo.title);
+                  setEditDueDate(todo.dueDate ? todo.dueDate.split('T')[0] : '');
+                }}>Cancel</button>
               </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="todo-item-right">
-        {/* COMPLETE/INCOMPLETE TOGGLE BUTTON */}
-        <button 
-          className="action-btn complete-btn"
-          onClick={handleToggle}
-          title={todo.completed ? "Mark as incomplete" : "Mark as complete"}
-        >
-          <span className="action-icon">
-            {todo.completed ? '↩️' : '✅'}
-          </span>
-        </button>
-        
-        {!todo.completed && !isEditing && (
-          <button 
-            className="action-btn edit-btn"
-            onClick={() => setIsEditing(true)}
-            title="Edit task"
-          >
-            <span className="action-icon">✏️</span>
-          </button>
-        )}
-        
-        <button 
-          className="action-btn delete-btn"
-          onClick={() => onDelete(todo._id)}
-          title="Delete task"
-        >
-          <span className="action-icon">🗑️</span>
-        </button>
-        
-        {/* STATUS BADGE WITH COMPLETION TIME */}
-        {todo.completed ? (
-          <div className="status-container">
-            <span className="status-badge completed-badge">
-              ✅ Completed
-            </span>
-            {todo.completedAt && (
-              <span className="completion-time">
-                {formatTime(todo.completedAt)}
-              </span>
-            )}
+            </div>
           </div>
         ) : (
-          <div className="status-container">
-            <span className="status-badge pending-badge">
-              ⏳ Pending
-            </span>
-            <button 
-              className="quick-complete-btn"
-              onClick={handleToggle}
-              title="Click to mark as complete"
-            >
-              Mark Complete
-            </button>
-          </div>
+          <>
+            <div className="task-main">
+              <div 
+                className="task-title"
+                onDoubleClick={() => setIsEditing(true)}
+              >
+                <span className={`title-text ${todo.completed ? 'completed' : ''}`}>
+                  {todo.title}
+                </span>
+                {todo.completedAt && (
+                  <span className="completion-time">
+                    Completed {formatDate(todo.completedAt)}
+                  </span>
+                )}
+              </div>
+              
+              <div className="task-meta">
+                <span className="creation-date">
+                  Added {formatDate(todo.createdAt)}
+                </span>
+                
+                {dueDateStatus.status !== 'none' && (
+                  <span className={`due-date ${dueDateStatus.class}`}>
+                    <span className="due-icon">
+                      {dueDateStatus.status === 'overdue' && '⚠️'}
+                      {dueDateStatus.status === 'today' && '🎯'}
+                      {dueDateStatus.status === 'tomorrow' && '📅'}
+                      {dueDateStatus.status === 'week' && '⏰'}
+                      {dueDateStatus.status === 'future' && '📅'}
+                    </span>
+                    <span className="due-text">{dueDateStatus.text}</span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="task-actions">
+              {!todo.completed && (
+                <button 
+                  className="action-button complete-button"
+                  onClick={() => onToggle(todo._id, todo.completed)}
+                  title="Mark as complete"
+                >
+                  <span className="button-icon">✓</span>
+                  <span className="button-text">Complete</span>
+                </button>
+              )}
+              
+              <div className="action-icons">
+                {!todo.completed && (
+                  <button 
+                    className="icon-button edit-button"
+                    onClick={() => setIsEditing(true)}
+                    title="Edit task"
+                  >
+                    <span className="icon">✏️</span>
+                  </button>
+                )}
+                
+                <button 
+                  className="icon-button delete-button"
+                  onClick={() => onDelete(todo._id)}
+                  title="Delete task"
+                >
+                  <span className="icon">🗑️</span>
+                </button>
+              </div>
+              
+              <div className="task-status">
+                {todo.completed ? (
+                  <span className="status-badge completed">
+                    Completed
+                  </span>
+                ) : isOverdue ? (
+                  <span className="status-badge overdue">
+                    Overdue
+                  </span>
+                ) : (
+                  <span className="status-badge pending">
+                    Pending
+                  </span>
+                )}
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>
