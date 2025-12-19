@@ -1,10 +1,10 @@
-/* Ultra Advanced Signup Page - Matching Login Design */
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
+
 
 .signup-page {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -19,7 +19,6 @@
   overflow: hidden;
 }
 
-/* Animated Mesh Background */
 .signup-page::before {
   content: '';
   position: absolute;
@@ -44,7 +43,6 @@
   }
 }
 
-/* Floating Geometric Shapes */
 .signup-page::after {
   content: '';
   position: absolute;
@@ -77,8 +75,8 @@
     0 8px 32px 0 rgba(31, 38, 135, 0.37),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
     0 0 80px rgba(91, 173, 254, 0.2);
-  width: 100%;
-  max-width: 520px;
+   padding: 52px 60px;     /* ⬇ height | ⬆ width */
+  max-width: 600px;  
   position: relative;
   z-index: 1;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -100,7 +98,6 @@
   }
 }
 
-/* Decorative Circle Top */
 .signup-container::before {
   content: '';
   position: absolute;
@@ -135,7 +132,6 @@
   }
 }
 
-/* User Plus Icon in Circle */
 .signup-container::after {
   content: '';
   position: absolute;
@@ -762,4 +758,12 @@ form {
   50% {
     box-shadow: 0 0 0 8px rgba(46, 213, 115, 0.4);
   }
+}
+
+form {
+  gap: 20px;
+}
+
+.divider {
+  margin: 22px 0 20px;
 }

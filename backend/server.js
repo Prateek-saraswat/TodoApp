@@ -16,7 +16,7 @@ await connectTodoDB();
 
 app.post("/signup", async (req, res) => {
   try {
-    const { fullName, email, password, role } = req.body;
+    const { fullName, email, password, role  } = req.body;
 
     if (!fullName || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
@@ -168,6 +168,9 @@ app.patch("/todos/:id", async (req, res) => {
     res.status(500).json({ message: "Error updating todo" });
   }
 });
+
+
+
 /* =================Admin Routes================= */
 app.post("/admin/users", async (req, res) => {
   try {

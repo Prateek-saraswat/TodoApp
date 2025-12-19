@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb";
 
-const serverURL = "mongodb://127.0.0.1:27017";
+const serverURL = "mongodb+srv://saraswatprateek0_db_user:V2ZOyvkbaOKcplSW@taskmanager.dpxtmhq.mongodb.net/?appName=TaskManager";
 const client = new MongoClient(serverURL);
 
 let db;

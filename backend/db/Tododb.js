@@ -1,6 +1,6 @@
 import {MongoClient} from 'mongodb'
 
-const client = new MongoClient('mongodb://localhost:27017/')
+const client = new MongoClient('mongodb+srv://saraswatprateek0_db_user:V2ZOyvkbaOKcplSW@taskmanager.dpxtmhq.mongodb.net/?appName=TaskManager')
 
 let todoDB
 
