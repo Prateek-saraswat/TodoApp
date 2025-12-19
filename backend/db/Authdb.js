@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb";
 
-const serverURL = "mongodb+srv://saraswatprateek0_db_user:V2ZOyvkbaOKcplSW@taskmanager.dpxtmhq.mongodb.net/?appName=TaskManager";
+const serverURL = "mongodb+srv://saraswatprateek0_db_user:Klg5GiDio4eHgHrk@cluster0.4gwsmef.mongodb.net/?appName=Cluster0";
 const client = new MongoClient(serverURL);
 
 let db;
