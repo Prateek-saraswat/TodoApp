@@ -20,7 +20,7 @@ export default function TodoApp() {
 
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:5000/todos/${user.id}`);
+      const res = await fetch(`https://todoapp1-lg2w.onrender.com/todos/${user.id}`);
       const data = await res.json();
       setTodos(data);
     } catch (err) {
@@ -38,7 +38,7 @@ export default function TodoApp() {
     if (!inputValue.trim()) return;
 
     try {
-      await fetch("http://localhost:5000/todos", {
+      await fetch("https://todoapp1-lg2w.onrender.com/todos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -62,7 +62,7 @@ export default function TodoApp() {
     if (!window.confirm("Are you sure you want to delete this task?")) return;
     
     try {
-      await fetch(`http://localhost:5000/todos/${id}`, {
+      await fetch(`https://todoapp1-lg2w.onrender.com/todos/${id}`, {
         method: "DELETE",
       });
       loadTodos();
@@ -73,7 +73,7 @@ export default function TodoApp() {
 
   const toggleTodo = async (id, currentStatus) => {
     try {
-      await fetch(`http://localhost:5000/todos/${id}`, {
+      await fetch(`https://todoapp1-lg2w.onrender.com/todos/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -94,7 +94,7 @@ export default function TodoApp() {
       const incompleteTodos = todos.filter(todo => !todo.completed);
       
       for (const todo of incompleteTodos) {
-        await fetch(`http://localhost:5000/todos/${todo._id}`, {
+        await fetch(`https://todoapp1-lg2w.onrender.com/todos/${todo._id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
@@ -114,7 +114,7 @@ export default function TodoApp() {
     if (!newText.trim()) return;
 
     try {
-      await fetch(`http://localhost:5000/todos/${id}`, {
+      await fetch(`https://todoapp1-lg2w.onrender.com/todos/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

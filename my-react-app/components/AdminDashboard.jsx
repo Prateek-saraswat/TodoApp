@@ -30,7 +30,7 @@ export default function AdminDashboard() {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/admin/users");
+      const res = await fetch("https://todoapp1-lg2w.onrender.com/admin/users");
       const data = await res.json();
 
       const formattedUsers = data.map((u) => ({
@@ -66,7 +66,7 @@ export default function AdminDashboard() {
 
   const loadUserTasks = async (userId) => {
     try {
-      const res = await fetch(`http://localhost:5000/todos/${userId}`);
+      const res = await fetch(`https://todoapp1-lg2w.onrender.com/todos/${userId}`);
       const data = await res.json();
       setUserTasks(data);
     } catch (err) {
@@ -125,7 +125,7 @@ export default function AdminDashboard() {
     if (!validateForm()) return;
 
     try {
-      const res = await fetch("http://localhost:5000/admin/users", {
+      const res = await fetch("https://todoapp1-lg2w.onrender.com/admin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newUser),
@@ -156,7 +156,7 @@ export default function AdminDashboard() {
     if (!newTask.title.trim()) return;
 
     try {
-      await fetch("http://localhost:5000/todos", {
+      await fetch("https://todoapp1-lg2w.onrender.com/todos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -184,7 +184,7 @@ export default function AdminDashboard() {
     if (!window.confirm("Are you sure you want to delete this task?")) return;
 
     try {
-      await fetch(`http://localhost:5000/todos/${taskId}`, {
+      await fetch(`https://todoapp1-lg2w.onrender.com/todos/${taskId}`, {
         method: "DELETE",
       });
       await loadUserTasks(selectedUser.id);
@@ -197,7 +197,7 @@ export default function AdminDashboard() {
 
   const handleToggleTaskComplete = async (taskId, currentStatus) => {
     try {
-      await fetch(`http://localhost:5000/todos/${taskId}`, {
+      await fetch(`https://todoapp1-lg2w.onrender.com/todos/${taskId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
 
     try {
       const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
-      await fetch(`http://localhost:5000/admin/users/${userId}`, {
+      await fetch(`https://todoapp1-lg2w.onrender.com/admin/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -236,7 +236,7 @@ export default function AdminDashboard() {
     if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
 
     try {
-      await fetch(`http://localhost:5000/admin/users/${id}`, {
+      await fetch(`https://todoapp1-lg2w.onrender.com/admin/users/${id}`, {
         method: "DELETE",
       });
       loadUsers();

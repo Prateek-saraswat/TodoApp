@@ -59,7 +59,7 @@ export default function SignupPage() {
     if (validateForm()) {
       console.log('Signup attempt:', formData);
       // Add your signup logic here
-     fetch("http://localhost:5000/signup", {
+     fetch("https://todoapp1-lg2w.onrender.com/signup", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(formData),
